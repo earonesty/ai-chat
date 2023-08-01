@@ -6,13 +6,21 @@
 - chains functions well
 - uses ai-functions and executes them
 
-# example:
+## install
+
+poetry add or pip install this repo, for now
+
+## example:
 
 
 ```python
 from ai_chat import AiConfig
+
+# only supports openai for now, todo: add other models
 from ai_chat.openai import OpenaiChat
 from ai_chat.store import SupabaseStore
+
+# supports SqliteStore() as well as MemoryStore() for storing the chain of prompts
 
 store = SupabaseStore()
 conf = AiConfig(id="persona-id-1", system="You are a silly friend.")
