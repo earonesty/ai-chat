@@ -33,12 +33,29 @@ class Chat(ABC):
         # this can include embeddings/search if you want, so that's why the content is there
         last_messages = history or self.recent_messages(content)
 
+
         prompt = [
             {
                 "role": "system",
                 "content": self.get_system()
             }
         ]
+
+        if not last_messages:
+            if self.ai.seed_chat:
+                for user, assistant in self.ai.seed_chat:
+                    prompt.append(
+                        {
+                            "role": "user",
+                            "content": user,
+                        }
+                    )
+                    prompt.append(
+                        {
+                            "role": "assistant",
+                            "content": assistant,
+                        }
+                    )
 
         for msg in last_messages:
             info = self.get_prompt(msg.role, msg.content)

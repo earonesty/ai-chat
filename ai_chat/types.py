@@ -12,12 +12,14 @@ class AiConfig:
     error_prefix: str
 
     def __init__(self, *, id, system, error_prefix=DEFAULT_ERROR_PREFIX, functions: AIFunctions = None,
-                 model_params=None, **data):
+                 model_params=None, seed_chat=None, max_prompt=10000, **data):
         self.__dict__ = data
         self.id = id
         self.system = system
         self.error_prefix = error_prefix
         self.functions = functions
+        self.seed_chat = seed_chat
+        self.max_prompt = max_prompt
         self.model_params = {
             **dict(model=DEFAULT_CHAT_MODEL, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS),
             **(model_params or {})}
