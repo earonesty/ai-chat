@@ -1,4 +1,5 @@
 import logging as log
+import os
 
 import openai
 
@@ -7,8 +8,11 @@ from ai_chat.types import AIFunctions
 from ai_chat import Function
 
 
+
 class OpenaiChat(Chat):
     def chat_complete(self, prompt, functions: AIFunctions) -> tuple[str, str, Function | None]:
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+
         args = dict(
             messages=prompt,
             **self.ai.model_params,
@@ -16,7 +20,9 @@ class OpenaiChat(Chat):
         )
 
         if functions:
-            args['functions'] = functions.get_openai()
+            args['functions'] = functions.openai_dict()
+
+        log.debug(args)
 
         result = openai.ChatCompletion.create(**args)
 

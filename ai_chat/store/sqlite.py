@@ -1,14 +1,13 @@
+import json
 import sqlite3
 import time
 from typing import TYPE_CHECKING
-
-from ai_chat.util import uuid
 
 if TYPE_CHECKING:
     from ai_chat.chat import Chat
 
 from ai_chat.types import Message
-from ai_chat.store.base import Store
+from ai_chat.store.base import Store, State
 
 
 class SqliteStore(Store):
@@ -34,17 +33,26 @@ class SqliteStore(Store):
             create index if not exists ix_messages_ai_id on messages(ai_id);
             create index if not exists ix_messages_thread_id on messages(thread_id);
             create index if not exists ix_messages_created_at on messages(created_at);
+
+            CREATE TABLE IF NOT EXISTS state (
+                ai_id TEXT,
+                key TEXT,
+                content TEXT,
+                created_at REAL,
+                primary key (ai_id, key)
+            );
+ 
         """
         self.conn.executescript(create_table_query)
         self.conn.commit()
 
-    def get_messages(self, chat: "Chat", content: str) -> list[Message]:
+    def get_messages(self, chat: "Chat", content: str, limit=20) -> list[Message]:
         """Must return oldest to newest."""
-        query = """
+        query = f"""
             SELECT * FROM messages
             WHERE thread_id = ? AND ai_id = ?
             ORDER BY created_at DESC
-            LIMIT 20;
+            LIMIT {limit};
         """
         params = (chat.thread_id, chat.ai.id)
         rows = self.conn.execute(query, params).fetchall()
@@ -56,9 +64,77 @@ class SqliteStore(Store):
             INSERT INTO messages (id, role, content, thread_id, ai_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?);
         """
-        params = (uuid(), message.role, message.content, message.thread_id, chat.ai.id, time.time())
+        params = (message.id, message.role, message.content, message.thread_id, chat.ai.id, time.time())
         self.conn.execute(query, params)
         self.conn.commit()
+
+    def set_state(self, chat: "Chat", key: str, state: "State"):
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            INSERT OR REPLACE INTO state (key, content, ai_id, created_at)
+            VALUES (?, ?, ?, ?);
+        """
+        params = (key, json.dumps(state), chat.ai.id, time.time())
+        self.conn.execute(query, params)
+        self.conn.commit()
+
+    def get_state(self, chat: "Chat", key: str) -> State | None:
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            SELECT content from  state
+             WHERE key = ? and ai_id = ?
+        """
+        params = (key, chat.ai.id)
+        rows = self.conn.execute(query, params).fetchall()
+        if rows:
+            return json.loads(rows[0]['content'])
+        return None
+
+    def enum_state(self, chat: "Chat", prefix: str) -> list[tuple[str, State]]:
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            SELECT content from  state
+             WHERE key like ? and ai_id = ?
+        """
+        params = (prefix + "%", chat.ai.id)
+        rows = self.conn.execute(query, params).fetchall()
+        if rows:
+            return [(row['key'], json.loads(row['content'])) for row in rows]
+        return []
+
+    def set_glob(self, key: str, state: "State"):
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            INSERT OR REPLACE INTO state (key, content, ai_id, created_at)
+            VALUES (?, ?, ?, ?);
+        """
+        params = (key, json.dumps(state), "<glob>", time.time())
+        self.conn.execute(query, params)
+        self.conn.commit()
+
+    def get_glob(self, key: str) -> State | None:
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            SELECT content from  state
+             WHERE key = ? and ai_id = ?
+        """
+        params = (key, "<glob>")
+        rows = self.conn.execute(query, params).fetchall()
+        if rows:
+            return json.loads(rows[0]['content'])
+        return None
+
+    def enum_glob(self, prefix: str) -> list[tuple[str, State]]:
+        """Add state to db, this is generally 'across chats'."""
+        query = """
+            SELECT content from  state
+             WHERE key like ? and ai_id = ?
+        """
+        params = (prefix + "%", "<glob>")
+        rows = self.conn.execute(query, params).fetchall()
+        if rows:
+            return [(row['key'], json.loads(row['content'])) for row in rows]
+        return []
 
 
 class MemoryStore(SqliteStore):

@@ -1,13 +1,13 @@
 import json
 import logging as log
+from abc import ABC, abstractmethod
 
 from ai_chat.types import Message, Function, ChatResponse, AiConfig, AIFunctions
 from ai_chat.store.base import Store
 from ai_chat.util import uuid
 
 
-
-class Chat:
+class Chat(ABC):
     def __init__(self, store: Store, ai: "AiConfig", thread_id: str, state=None):
         """Thread of conversation"""
         self.ai = ai
@@ -27,11 +27,11 @@ class Chat:
         """Override this if you want the current state to be considered in the system prompt."""
         return self.ai.system
 
-    def chat(self, content) -> ChatResponse:
+    def chat(self, content, history: list["Message"] | None = None) -> ChatResponse:
         """Continue a conversation"""
 
         # this can include embeddings/search if you want, so that's why the content is there
-        last_messages = self.recent_messages(content)
+        last_messages = history or self.recent_messages(content)
 
         prompt = [
             {
@@ -41,10 +41,7 @@ class Chat:
         ]
 
         for msg in last_messages:
-            info = dict(
-                role=msg.role,
-                content=msg.content
-            )
+            info = self.get_prompt(msg.role, msg.content)
             prompt.append(info)
 
         return self.chat_as(content, "user", prompt)
@@ -87,14 +84,16 @@ class Chat:
 
         out_role, reply, function = self.chat_complete(prompt, functions)
 
-        # structure as the db would and save
-        request_id, response_id = self.save_interaction(in_role, content, out_role, reply or function)
-
         if function:
             function_result = self.execute_function(function)
 
+            # structure as the db would and save
+            self.save_interaction(in_role, content, out_role, function)
+
             # continue chat with the functional reply, don't return until you get an assistant reply
             return self.chat_as(function_result, 'function:' + function.name, prompt)
+
+        request_id, response_id = self.save_interaction(in_role, content, out_role, reply)
 
         return ChatResponse(
             request_id=request_id,
@@ -113,12 +112,15 @@ class Chat:
         """
         return self.ai_functions() and self.ai_functions()
 
-    def add_message(self, role: str, content: str):
+    def add_message(self, role: str, content: str | Function):
+        if isinstance(content, Function):
+            role = "function:" + content.name
+            content = content.arguments
         user_chat = self.structure_reply(content, role)
         self.store.add_message(user_chat, self)
         return user_chat.id
 
-    def save_interaction(self, in_role: str, content: str, out_role: str, reply: str):
+    def save_interaction(self, in_role: str, content: str, out_role: str, reply: str | Function):
         is_error = in_role == "function_all" and reply.startswith(self.ai.error_prefix)
 
         if not is_error:
@@ -137,5 +139,6 @@ class Chat:
             content=reply,
         )
 
+    @abstractmethod
     def chat_complete(self, prompt, functions) -> tuple[str, str, Function | None]:
         """Override for your favorite chat model"""

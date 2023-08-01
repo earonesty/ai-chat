@@ -2,22 +2,22 @@ import pytest
 from dotenv import load_dotenv
 
 from ai_chat import Message
-from ai_chat.store import SupabaseStore
+from ai_chat.store import SqliteStore
 from ai_chat.util import uuid
 from tests.test_chat import chat_instance, memory_store, ai_config  # noqa
 
 load_dotenv()
 
 @pytest.fixture
-def supabase():
+def sqlite(tmp_path):
     test_id = uuid()
-    store = SupabaseStore()
+    store = SqliteStore(tmp_path / "db")
     yield store, test_id
-    store.conn.table("messages").delete().eq("ai_id", test_id).execute()
+    store.conn.close()
 
 
-def test_supabase_store(chat_instance, supabase):
-    store, ai_id = supabase
+def test_sqlite_store(chat_instance, sqlite):
+    store, ai_id = sqlite
     chat_instance.ai.id = ai_id
     msg_id = uuid()
     chat_instance.thread_id = uuid()
@@ -36,7 +36,6 @@ def test_supabase_store(chat_instance, supabase):
     assert msgs[0].content == "me"
     assert msgs[0].thread_id == chat_instance.thread_id
     assert msgs[0].ai_id == chat_instance.ai.id
-
 
     store.set_state(chat_instance, "name", "val")
 
