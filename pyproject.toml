@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ai-chat"
+name = "ai-chat-chain"
 version = "0.1.1"
 description = "maintain chat conversation state"
 authors = ["erik aronesty <erik@q32.com>"]

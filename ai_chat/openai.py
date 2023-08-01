@@ -33,7 +33,7 @@ class OpenaiChat(Chat):
         content = message.content
 
         func = None
-        if content is None:
+        if getattr(message, "function_call", None):
             function = message.function_call
             role = "function_call"
             func = Function(name=function.pop('name'), arguments=function.pop('arguments'), **function)
