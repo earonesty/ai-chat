@@ -18,7 +18,7 @@ class AiConfig:
         self.system = system
         self.error_prefix = error_prefix
         self.functions = functions
-        self.seed_chat = seed_chat
+        self.seed_chat: list[list] = seed_chat
         self.max_prompt = max_prompt
         self.model_params = {
             **dict(model=DEFAULT_CHAT_MODEL, temperature=DEFAULT_TEMPERATURE, max_tokens=DEFAULT_MAX_TOKENS),

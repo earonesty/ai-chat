@@ -25,7 +25,7 @@ class OpenaiChat(Chat):
 
         result = openai.ChatCompletion.create(**args)
 
-        log.debug("prompt: %s", prompt)
+        # log.debug("prompt: %s", prompt)
         log.debug("chat complete: %s", result)
 
         role = "assistant"

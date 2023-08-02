@@ -26,7 +26,7 @@ class Chat(ABC):
         """Override this if you want the current state to be considered in the system prompt."""
         return self.ai.system
 
-    def chat(self, content, history: list["Message"] | None = None) -> ChatResponse:
+    def chat(self, content, history: list["Message"] | None = None, save=True) -> ChatResponse:
         """Continue a conversation"""
 
         # this can include embeddings/search if you want, so that's why the content is there
@@ -59,7 +59,7 @@ class Chat(ABC):
             info = self.get_prompt(msg.role, msg.content)
             prompt.append(info)
 
-        return self.chat_as(content, "user", prompt)
+        return self.chat_as(content, "user", prompt, save=save)
 
     @staticmethod
     def get_prompt(role, content):
@@ -91,7 +91,7 @@ class Chat(ABC):
             log.exception("Got an error while running function")
             return f"{self.ai.error_prefix} '{repr(e)}' while running '{function_name}'"
 
-    def chat_as(self, content, in_role, prompt) -> ChatResponse:
+    def chat_as(self, content, in_role, prompt, save=True) -> ChatResponse:
         # add content and role to the prompt
         prompt.append(self.get_prompt(in_role, content))
 
@@ -102,17 +102,21 @@ class Chat(ABC):
         if function:
             function_result = self.execute_function(function)
 
-            # structure as the db would and save
-            self.save_interaction(in_role, content, out_role, function)
+            if save:
+                # structure as the db would and save
+                self.save_interaction(in_role, content, out_role, function)
 
             # continue chat with the functional reply, don't return until you get an assistant reply
             return self.chat_as(function_result, 'function:' + function.name, prompt)
 
-        request_id, response_id = self.save_interaction(in_role, content, out_role, reply)
+        if save:
+            request_id, response_id = self.save_interaction(in_role, content, out_role, reply)
+        else:
+            request_id, response_id = None, None
 
         return ChatResponse(
-            request_id=request_id,
-            response_id=response_id,
+            request_id=None,
+            response_id=None,
             content=reply
         )
 
