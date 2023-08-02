@@ -115,8 +115,8 @@ class Chat(ABC):
             request_id, response_id = None, None
 
         return ChatResponse(
-            request_id=None,
-            response_id=None,
+            request_id=request_id,
+            response_id=response_id,
             content=reply
         )
 

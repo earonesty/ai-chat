@@ -3,6 +3,7 @@ from typing import Annotated
 
 import pytest
 from ai_chat import AiConfig, Chat, Function, ChatResponse, Message
+from ai_chat.defaults import DEFAULT_TEMPERATURE
 from ai_chat.store import MemoryStore
 from ai_chat.types import AIFunctions
 
@@ -55,7 +56,7 @@ def test_ai_config_creation(ai_config):
     assert ai_config.error_prefix == "Got an error:"
     assert ai_config.model_params == {
         "model": "gpt-3.5-turbo-16k",
-        "temperature": 0.2,
+        "temperature": DEFAULT_TEMPERATURE,
         "max_tokens": 1024,
     }
     assert ai_config.functions is None
