@@ -25,7 +25,7 @@ def ai_config():
 @pytest.fixture
 def chat_instance(memory_store, ai_config):
     thread_id = "thread_1"
-    return MockChat(memory_store, ai_config, thread_id)
+    return MockChat(store=memory_store, ai=ai_config, thread_id=thread_id)
 
 
 def test_chat_response():
@@ -65,7 +65,6 @@ def test_chat_instance_creation(chat_instance, ai_config):
     assert chat_instance.ai == ai_config
     assert chat_instance.thread_id == "thread_1"
     assert isinstance(chat_instance.store, MemoryStore)
-    assert chat_instance.state == {}
 
 
 def test_chat_response_default_parameters(chat_instance):

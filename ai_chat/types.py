@@ -29,9 +29,9 @@ class Message:
     id: str
     role: str
     content: str
-    thread_id: str
+    thread_id: str | None
 
-    def __init__(self, *, id, role, content, thread_id, **data):
+    def __init__(self, *, id, role, content, thread_id=None, **data):
         self.__dict__ = data
         self.id = id
         self.role = role

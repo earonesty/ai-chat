@@ -8,7 +8,6 @@ from ai_chat.types import AIFunctions
 from ai_chat import Function
 
 
-
 class OpenaiChat(Chat):
     def chat_complete(self, prompt, functions: AIFunctions) -> tuple[str, str, Function | None]:
         openai.api_key = os.getenv("OPENAI_API_KEY")

@@ -64,7 +64,7 @@ class SqliteStore(Store):
             INSERT INTO messages (id, role, content, thread_id, ai_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?);
         """
-        params = (message.id, message.role, message.content, message.thread_id, chat.ai.id, time.time())
+        params = (message.id, message.role, message.content, chat.thread_id, chat.ai.id, time.time())
         self.conn.execute(query, params)
         self.conn.commit()
 

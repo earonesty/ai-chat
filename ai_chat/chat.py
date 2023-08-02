@@ -8,13 +8,12 @@ from ai_chat.util import uuid
 
 
 class Chat(ABC):
-    def __init__(self, store: Store, ai: "AiConfig", thread_id: str, state=None):
+    def __init__(self, *, ai: "AiConfig", thread_id: str | None = None, store: Store | None = None):
         """Thread of conversation"""
         self.ai = ai
         self.functions = self.ai.functions
         self.thread_id = thread_id
         self.store = store
-        self.state = state or {}
 
     def function_kws(self):
         """Override this to provide other kwargs to functions"""
@@ -32,7 +31,6 @@ class Chat(ABC):
 
         # this can include embeddings/search if you want, so that's why the content is there
         last_messages = history or self.recent_messages(content)
-
 
         prompt = [
             {
@@ -134,7 +132,8 @@ class Chat(ABC):
             role = "function:" + content.name
             content = content.arguments
         user_chat = self.structure_reply(content, role)
-        self.store.add_message(user_chat, self)
+        if self.store:
+            self.store.add_message(user_chat, self)
         return user_chat.id
 
     def save_interaction(self, in_role: str, content: str, out_role: str, reply: str | Function):

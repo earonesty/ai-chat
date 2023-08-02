@@ -36,7 +36,7 @@ class Store(ABC):
         ...
 
     @abstractmethod
-    def get_glob(self, key: str) -> list[State]:
+    def get_glob(self, key: str) -> State:
         ...
 
     @abstractmethod

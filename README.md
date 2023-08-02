@@ -19,12 +19,22 @@ from ai_chat import AiConfig
 # only supports openai for now, todo: add other models
 from ai_chat.openai import OpenaiChat
 from ai_chat.store import SupabaseStore
+from ai_functions import AIFunctions
 
 # supports SqliteStore() as well as MemoryStore() for storing the chain of prompts
 
 store = SupabaseStore()
 conf = AiConfig(id="persona-id-1", system="You are a silly friend.")
-session = OpenaiChat(store, conf, "session-1")
+session = OpenaiChat(store=store, ai=conf, thread_id="session-1")
+
+def search_google():
+    ...
+
+def get_calendar():
+    ...
+
+def add_calendar():
+    ...
 
 session.functions = AIFunctions([search_google, get_calendar, add_calendar])
 
