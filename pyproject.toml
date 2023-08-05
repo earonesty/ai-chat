@@ -10,6 +10,7 @@ packages = [{include = "ai_chat"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 openai = {version = "^0.27.8", optional = true}
+litellm = {version = "^0.1.2291", optional = true}
 supabase = {version = "^1.0.3", optional = true}
 ai-functions = "^0.4.0"
 
