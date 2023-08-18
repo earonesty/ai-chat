@@ -21,9 +21,12 @@ class OpenaiChat(Chat):
         if functions:
             args['functions'] = functions.openai_dict()
 
-        log.debug(args)
-
-        result = openai.ChatCompletion.create(**args)
+        try:
+            result = openai.ChatCompletion.create(**args)
+        except Exception:
+            # log the full args on error
+            log.exception("openai error: %s", args)
+            raise
 
         # log.debug("prompt: %s", prompt)
         log.debug("chat complete: %s", result)
