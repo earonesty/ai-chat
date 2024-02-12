@@ -85,8 +85,7 @@ class SqliteStore(Store):
              WHERE key = ? and ai_id = ?
         """
         params = (key, chat.ai.id)
-        rows = self.conn.execute(query, params).fetchall()
-        if rows:
+        if rows := self.conn.execute(query, params).fetchall():
             return json.loads(rows[0]['content'])
         return None
 
@@ -97,8 +96,7 @@ class SqliteStore(Store):
              WHERE key like ? and ai_id = ?
         """
         params = (prefix + "%", chat.ai.id)
-        rows = self.conn.execute(query, params).fetchall()
-        if rows:
+        if rows := self.conn.execute(query, params).fetchall():
             return [(row['key'], json.loads(row['content'])) for row in rows]
         return []
 
@@ -119,8 +117,7 @@ class SqliteStore(Store):
              WHERE key = ? and ai_id = ?
         """
         params = (key, "<glob>")
-        rows = self.conn.execute(query, params).fetchall()
-        if rows:
+        if rows := self.conn.execute(query, params).fetchall():
             return json.loads(rows[0]['content'])
         return None
 
@@ -131,8 +128,7 @@ class SqliteStore(Store):
              WHERE key like ? and ai_id = ?
         """
         params = (prefix + "%", "<glob>")
-        rows = self.conn.execute(query, params).fetchall()
-        if rows:
+        if rows := self.conn.execute(query, params).fetchall():
             return [(row['key'], json.loads(row['content'])) for row in rows]
         return []
 
