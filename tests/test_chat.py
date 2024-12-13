@@ -1,8 +1,9 @@
 import json
 from typing import Annotated
-
+import os 
 import pytest
 from ai_chat import AiConfig, Chat, Function, ChatResponse, Message
+from ai_chat.openai import OpenaiChat
 from ai_chat.defaults import DEFAULT_TEMPERATURE
 from ai_chat.store import MemoryStore
 from ai_chat.types import AIFunctions
@@ -27,6 +28,20 @@ def ai_config():
 def chat_instance(memory_store, ai_config):
     thread_id = "thread_1"
     return MockChat(store=memory_store, ai=ai_config, thread_id=thread_id)
+
+
+@pytest.fixture
+def local_instance(memory_store, ai_config):
+    ai_config.model_params["model"] = "TheBloke/CodeLlama-7B-Instruct-ZGGUF:Q4_K_S" 
+#    ai_config.model_params["model"] = "kirp/TinyLlama-1.1B-Chat-v0.2-gguf:q2_k" 
+#    ai_config.model_params["model"] = "webgpu/vicuna-v1-7b-q4f32_0" 
+    ai_config.system = "You are a helpful assistant"
+    thread_id = "thread_1"
+    import openai
+    os.environ["OPENAI_API_KEY"] = "testkey1"
+    openai.api_base = "http://127.0.0.1:8000/v1"
+#    openai.api_base = "https://ai-spider-production.up.railway.app/v1"
+    return OpenaiChat(store=memory_store, ai=ai_config, thread_id=thread_id)
 
 
 def test_chat_response():
@@ -67,6 +82,17 @@ def test_chat_instance_creation(chat_instance, ai_config):
     assert chat_instance.thread_id == "thread_1"
     assert isinstance(chat_instance.store, MemoryStore)
 
+
+@pytest.mark.manual
+def test_local_server(local_instance):
+    # works with llama_cpp.server
+    user_id = local_instance.add_message("user", "my name is erik")
+    user_id = local_instance.add_message("assistant", "Hello, Erik!")
+    chat_response = local_instance.chat("what is my name?")
+    print(chat_response)
+    assert chat_response.request_id is not None
+    assert chat_response.response_id is not None
+    assert chat_response.content is not None
 
 def test_chat_response_default_parameters(chat_instance):
     chat_response = chat_instance.chat("Hello, AI!")
